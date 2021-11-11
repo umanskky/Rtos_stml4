@@ -444,7 +444,7 @@ void StartDefaultTask(void *argument)
       HAL_UART_Transmit(&huart3, data, sizeof(data), 0xffff);
     }
     
-    osDelay(1000);    
+    osDelay(200);    
   }
   
   /* USER CODE END 5 */
