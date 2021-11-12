@@ -102,12 +102,12 @@ void timer_init(void);
 uint8_t Buff[128];
 
 uint8_t rxBuffer[64];
-char rxData[64] = "Alexander\r\n";
+//char rxData[64] = "Alexander\r\n";
 
 uint8_t data[64];
 uint8_t cnt = 0;
 
-osStatus_t status2;
+//osStatus_t status2;
 
 /* USER CODE END 0 */
 
@@ -493,13 +493,14 @@ void StartTask02(void *argument)
 {
   /* USER CODE BEGIN StartTask02 */
   /* Infinite loop */
-  status2 = osSemaphoreAcquire(myBinarySem01Handle, 0);
+  osStatus_t status = osSemaphoreAcquire(myBinarySem01Handle, 0);
+  char rxData[64] = "Alexander\r\n";
   
   for(;;)
   {
     //status2 = osSemaphoreRelease(myBinarySem01Handle);
-    status2 = osSemaphoreAcquire(myBinarySem01Handle, 0);
-    if(status2 == osOK){
+    status = osSemaphoreAcquire(myBinarySem01Handle, 0);
+    if(status == osOK){
       //HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
       HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
       osMessageQueuePut(myQueue01Handle,rxData, 0, 0);

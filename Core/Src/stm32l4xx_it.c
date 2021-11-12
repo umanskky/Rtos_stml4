@@ -277,8 +277,8 @@ void USART3_IRQHandler(void)
     //HAL_UART_Transmit(&huart3, rxBuffer, sizeof(rxBuffer), 0xffff);
     //HAL_UART_Transmit(&huart3, rxData, sizeof(rxData), 0xffff);
     memset(rxBuffer, 0, sizeof(rxBuffer));
-    
-		__HAL_DMA_SET_COUNTER(&hdma_usart3_rx, 64);
+    hdma_usart3_rx.Instance->CNDTR = 64;
+		//__HAL_DMA_SET_COUNTER(&hdma_usart3_rx, 64);
 		__HAL_DMA_ENABLE(&hdma_usart3_rx);
 	}
 
