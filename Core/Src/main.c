@@ -102,7 +102,7 @@ void timer_init(void);
 uint8_t Buff[128];
 
 uint8_t rxBuffer[64];
-uint8_t rxData[64] = "Alexander\r\n";
+char rxData[64] = "Alexander\r\n";
 
 uint8_t data[64];
 uint8_t cnt = 0;
@@ -500,13 +500,14 @@ void StartTask02(void *argument)
     //status2 = osSemaphoreRelease(myBinarySem01Handle);
     status2 = osSemaphoreAcquire(myBinarySem01Handle, 0);
     if(status2 == osOK){
-      HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
+      //HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
       HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-      __nop();
+      osMessageQueuePut(myQueue01Handle,rxData, 0, 0);
+      //__nop();
     }
-    //osThreadYield();
+    osThreadYield();
     
-    osDelay(500);
+    //osDelay(500);
   }
   /* USER CODE END StartTask02 */
 }
