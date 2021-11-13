@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -27,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "File_Handling_RTOS.h"
 
 /* USER CODE END Includes */
 
@@ -45,6 +47,10 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+SPI_HandleTypeDef hspi1;
+
+TIM_HandleTypeDef htim3;
+
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
 DMA_HandleTypeDef hdma_usart1_rx;
@@ -55,13 +61,6 @@ osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128 * 4
-};
-/* Definitions for myTask02 */
-osThreadId_t myTask02Handle;
-const osThreadAttr_t myTask02_attributes = {
-  .name = "myTask02",
-  .priority = (osPriority_t) osPriorityLow,
   .stack_size = 128 * 4
 };
 /* Definitions for myQueue01 */
@@ -86,8 +85,9 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_SPI1_Init(void);
+static void MX_TIM3_Init(void);
 void StartDefaultTask(void *argument);
-void StartTask02(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -142,12 +142,27 @@ int main(void)
   MX_DMA_Init();
   MX_USART3_UART_Init();
   MX_USART1_UART_Init();
+  MX_FATFS_Init();
+  MX_SPI1_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   
   //NVIC_EnableIRQ(USART3_IRQn);
-  NVIC_EnableIRQ (TIM1_UP_TIM16_IRQn);
+  //NVIC_EnableIRQ (TIM1_UP_TIM16_IRQn);
   USER_Usart3_Init();
-  timer_init();
+  //timer_init();
+	//TIM16->CR1   |=  TIM_CR1_CEN | TIM_CR1_ARPE;
+	//NVIC_EnableIRQ (TIM1_UP_TIM16_IRQn);
+	
+	//HAL_TIM_Base_Start(&htim3);  // us delay timer
+  HAL_TIM_Base_Start_IT(&htim3); // periodic delay timer
+	//NVIC_EnableIRQ (TIM3_IRQn);
+	
+	Mount_SD("/");
+  Format_SD();
+  Create_File("ADC_DATA.TXT");
+  Create_File("TEMP.TXT");
+  Unmount_SD("/");
   
   //NVIC_EnableIRQ(DMA1_Channel3_IRQn);
   
@@ -188,9 +203,6 @@ int main(void)
   /* Create the thread(s) */
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
-
-  /* creation of myTask02 */
-  myTask02Handle = osThreadNew(StartTask02, NULL, &myTask02_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -267,6 +279,91 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief SPI1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI1_Init(void)
+{
+
+  /* USER CODE BEGIN SPI1_Init 0 */
+
+  /* USER CODE END SPI1_Init 0 */
+
+  /* USER CODE BEGIN SPI1_Init 1 */
+
+  /* USER CODE END SPI1_Init 1 */
+  /* SPI1 parameter configuration*/
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 7;
+  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI1_Init 2 */
+
+  /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 60000;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 2000;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+
 }
 
 /**
@@ -374,7 +471,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
@@ -385,11 +482,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_5;
+  /*Configure GPIO pin : PA4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PB13 */
@@ -422,35 +519,35 @@ void USER_Usart3_Init(void)
     }
 //***********************************
 
-void timer_init(void)
-{
+//void timer_init(void)
+//{
 
-  //--------------  таймер на 1 секунду --------------
-  
-  RCC->APB2ENR |=  RCC_APB2ENR_TIM16EN;
-  TIM16->PSC    =  10000 - 1;
-  TIM16->ARR    =  10000 - 1;
-  TIM16->DIER  |=  TIM_DIER_UIE;
-  TIM16->CR1   |=  TIM_CR1_CEN | TIM_CR1_ARPE;
-  NVIC_EnableIRQ (TIM1_UP_TIM16_IRQn);
-  
-  //---------------------------------------------
- 
-}
+//  //--------------  таймер на 1 секунду --------------
+//  
+//  RCC->APB2ENR |=  RCC_APB2ENR_TIM16EN;
+//  TIM16->PSC    =  60000 - 1;
+//  TIM16->ARR    =  20000 - 1;
+//  TIM16->DIER  |=  TIM_DIER_UIE;
+//  TIM16->CR1   |=  TIM_CR1_CEN | TIM_CR1_ARPE;
+//  NVIC_EnableIRQ (TIM1_UP_TIM16_IRQn);
+//  
+//  //---------------------------------------------
+// 
+//}
     
 //***********************************   
-void TIM1_UP_TIM16_IRQHandler(void)
-{
-  if(TIM16->SR & TIM_SR_UIF)
-  {
-    TIM16->SR &= ~TIM_SR_UIF;
-    //osMessageQueuePut(myQueue01Handle,&cnt, 0, 0);
-    //status2 = osSemaphoreRelease(myBinarySem01Handle);
-    //osSemaphoreAcquire(myBinarySem01Handle, 0);
-    cnt++;
-  }
-  
-}   
+//void TIM1_UP_TIM16_IRQHandler(void)
+//{
+//  if(TIM16->SR & TIM_SR_UIF)
+//  {
+//    TIM16->SR &= ~TIM_SR_UIF;
+//    //osMessageQueuePut(myQueue01Handle,&cnt, 0, 0);
+//    //status2 = osSemaphoreRelease(myBinarySem01Handle);
+//    //osSemaphoreAcquire(myBinarySem01Handle, 0);
+//    cnt++;
+//  }
+//  
+//}   
         
 /* USER CODE END 4 */
 
@@ -466,6 +563,7 @@ void StartDefaultTask(void *argument)
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   osStatus_t status;
+	//char* data = "Alexander";
   
   for(;;)
   {
@@ -480,37 +578,6 @@ void StartDefaultTask(void *argument)
   }
   
   /* USER CODE END 5 */
-}
-
-/* USER CODE BEGIN Header_StartTask02 */
-/**
-* @brief Function implementing the myTask02 thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartTask02 */
-void StartTask02(void *argument)
-{
-  /* USER CODE BEGIN StartTask02 */
-  /* Infinite loop */
-  osStatus_t status = osSemaphoreAcquire(myBinarySem01Handle, 0);
-  char rxData[64] = "Alexander\r\n";
-  
-  for(;;)
-  {
-    //status2 = osSemaphoreRelease(myBinarySem01Handle);
-    status = osSemaphoreAcquire(myBinarySem01Handle, 0);
-    if(status == osOK){
-      //HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
-      HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-      osMessageQueuePut(myQueue01Handle,rxData, 0, 0);
-      //__nop();
-    }
-    osThreadYield();
-    
-    //osDelay(500);
-  }
-  /* USER CODE END StartTask02 */
 }
 
  /**
@@ -530,6 +597,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
+	
+	
+	
 
   /* USER CODE END Callback 1 */
 }

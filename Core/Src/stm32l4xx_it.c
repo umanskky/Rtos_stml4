@@ -40,12 +40,26 @@ extern osSemaphoreId_t myBinarySem01Handle;
 extern uint8_t rxBuffer[64];
 extern uint8_t rxData[64];
 uint16_t rxBufLen;
+extern uint8_t cnt;
 
 osStatus_t status3;
+
 /* USER CODE END TD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+volatile uint8_t FatFsCnt = 0;
+volatile uint8_t Timer1, Timer2;
+
+void SDTimer_Handler(void)
+{
+  if(Timer1 > 0)
+    Timer1--;
+
+  if(Timer2 > 0)
+    Timer2--;
+}
 
 /* USER CODE END PD */
 
@@ -70,6 +84,7 @@ osStatus_t status3;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern TIM_HandleTypeDef htim3;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart3_rx;
 extern UART_HandleTypeDef huart1;
@@ -209,11 +224,40 @@ void DMA1_Channel5_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles TIM3 global interrupt.
+  */
+void TIM3_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM3_IRQn 0 */
+
+  /* USER CODE END TIM3_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim3);
+  /* USER CODE BEGIN TIM3_IRQn 1 */
+	if(TIM3->SR & TIM_SR_UIF)
+  {
+    TIM3->SR &= ~TIM_SR_UIF;
+    //osMessageQueuePut(myQueue01Handle,&cnt, 0, 0);
+    //status2 = osSemaphoreRelease(myBinarySem01Handle);
+    //osSemaphoreAcquire(myBinarySem01Handle, 0);
+    cnt++;
+  }
+
+  /* USER CODE END TIM3_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM4 global interrupt.
   */
 void TIM4_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM4_IRQn 0 */
+	
+	FatFsCnt++;
+	if(FatFsCnt >= 10)
+	{
+	  FatFsCnt = 0;
+	  SDTimer_Handler();
+	}
 
   /* USER CODE END TIM4_IRQn 0 */
   HAL_TIM_IRQHandler(&htim4);
@@ -294,9 +338,6 @@ void EXTI15_10_IRQHandler(void)
 
   /* USER CODE END EXTI15_10_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
-  
-  
-  //osSemaphoreRelease(myBinarySem01Handle);
   /* USER CODE BEGIN EXTI15_10_IRQn 1 */
   status3 = osSemaphoreRelease(myBinarySem01Handle);
   __nop();
