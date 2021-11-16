@@ -55,6 +55,8 @@ void Check_SD_Space (void);
  */
 FRESULT Update_File (char *name, char *data);
 
+uint32_t Size_File (char *name);
+
 
 
 

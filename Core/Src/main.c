@@ -52,9 +52,9 @@ SPI_HandleTypeDef hspi1;
 TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart1;
-UART_HandleTypeDef huart3;
+UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart1_rx;
-DMA_HandleTypeDef hdma_usart3_rx;
+DMA_HandleTypeDef hdma_usart2_rx;
 
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -83,10 +83,10 @@ const osSemaphoreAttr_t myBinarySem01_attributes = {
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
-static void MX_USART3_UART_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_USART2_UART_Init(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -106,6 +106,8 @@ uint8_t rxBuffer[64];
 
 uint8_t data[64];
 uint8_t cnt = 0;
+
+uint32_t size = 0;
 
 //osStatus_t status2;
 
@@ -140,11 +142,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_USART3_UART_Init();
   MX_USART1_UART_Init();
   MX_FATFS_Init();
   MX_SPI1_Init();
   MX_TIM3_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   
   //NVIC_EnableIRQ(USART3_IRQn);
@@ -155,14 +157,14 @@ int main(void)
 	//NVIC_EnableIRQ (TIM1_UP_TIM16_IRQn);
 	
 	//HAL_TIM_Base_Start(&htim3);  // us delay timer
-  HAL_TIM_Base_Start_IT(&htim3); // periodic delay timer
+  //HAL_TIM_Base_Start_IT(&htim3); // periodic delay timer
 	//NVIC_EnableIRQ (TIM3_IRQn);
 	
-	Mount_SD("/");
-  Format_SD();
-  Create_File("ADC_DATA.TXT");
-  Create_File("TEMP.TXT");
-  Unmount_SD("/");
+//	Mount_SD("/");
+//  Format_SD();
+//  Create_File("ADC_DATA.TXT");
+//  Create_File("TEMP.TXT");
+//  Unmount_SD("/");
   
   //NVIC_EnableIRQ(DMA1_Channel3_IRQn);
   
@@ -266,9 +268,9 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_USART3;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_USART2;
   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
-  PeriphClkInit.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
+  PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
@@ -402,37 +404,37 @@ static void MX_USART1_UART_Init(void)
 }
 
 /**
-  * @brief USART3 Initialization Function
+  * @brief USART2 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_USART3_UART_Init(void)
+static void MX_USART2_UART_Init(void)
 {
 
-  /* USER CODE BEGIN USART3_Init 0 */
+  /* USER CODE BEGIN USART2_Init 0 */
 
-  /* USER CODE END USART3_Init 0 */
+  /* USER CODE END USART2_Init 0 */
 
-  /* USER CODE BEGIN USART3_Init 1 */
+  /* USER CODE BEGIN USART2_Init 1 */
 
-  /* USER CODE END USART3_Init 1 */
-  huart3.Instance = USART3;
-  huart3.Init.BaudRate = 115200;
-  huart3.Init.WordLength = UART_WORDLENGTH_8B;
-  huart3.Init.StopBits = UART_STOPBITS_1;
-  huart3.Init.Parity = UART_PARITY_NONE;
-  huart3.Init.Mode = UART_MODE_TX_RX;
-  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart3.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart3) != HAL_OK)
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN USART3_Init 2 */
+  /* USER CODE BEGIN USART2_Init 2 */
 
-  /* USER CODE END USART3_Init 2 */
+  /* USER CODE END USART2_Init 2 */
 
 }
 
@@ -446,12 +448,12 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Channel3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
   /* DMA1_Channel5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+  /* DMA1_Channel6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
 
 }
 
@@ -506,9 +508,9 @@ static void MX_GPIO_Init(void)
 
 void USER_Usart3_Init(void)
     {
-    	if(HAL_UART_Receive_DMA(&huart3, (uint8_t *)rxBuffer, 64) == HAL_OK)
+    	if(HAL_UART_Receive_DMA(&huart2, (uint8_t *)rxBuffer, 64) == HAL_OK)
     	{
-    		__HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);
+    		__HAL_UART_ENABLE_IT(&huart2, UART_IT_IDLE);
     		printf("STM32F207 Ready!\r\n");
     	}
     	else
@@ -519,35 +521,6 @@ void USER_Usart3_Init(void)
     }
 //***********************************
 
-//void timer_init(void)
-//{
-
-//  //--------------  таймер на 1 секунду --------------
-//  
-//  RCC->APB2ENR |=  RCC_APB2ENR_TIM16EN;
-//  TIM16->PSC    =  60000 - 1;
-//  TIM16->ARR    =  20000 - 1;
-//  TIM16->DIER  |=  TIM_DIER_UIE;
-//  TIM16->CR1   |=  TIM_CR1_CEN | TIM_CR1_ARPE;
-//  NVIC_EnableIRQ (TIM1_UP_TIM16_IRQn);
-//  
-//  //---------------------------------------------
-// 
-//}
-    
-//***********************************   
-//void TIM1_UP_TIM16_IRQHandler(void)
-//{
-//  if(TIM16->SR & TIM_SR_UIF)
-//  {
-//    TIM16->SR &= ~TIM_SR_UIF;
-//    //osMessageQueuePut(myQueue01Handle,&cnt, 0, 0);
-//    //status2 = osSemaphoreRelease(myBinarySem01Handle);
-//    //osSemaphoreAcquire(myBinarySem01Handle, 0);
-//    cnt++;
-//  }
-//  
-//}   
         
 /* USER CODE END 4 */
 
@@ -563,6 +536,7 @@ void StartDefaultTask(void *argument)
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   osStatus_t status;
+  
 	//char* data = "Alexander";
   
   for(;;)
@@ -571,10 +545,14 @@ void StartDefaultTask(void *argument)
     
     if(status == osOK)
     {
-      HAL_UART_Transmit(&huart3, data, sizeof(data), 0xffff);
+      Mount_SD("/");
+      Update_File ("TEMP.TXT", (char*)data);
+      HAL_UART_Transmit(&huart2, data, sizeof(data), 0xffff);
+      size = Size_File("TEMP.TXT");
+      Unmount_SD("/");
     }
     
-    osDelay(200);    
+    //osDelay(200);    
   }
   
   /* USER CODE END 5 */

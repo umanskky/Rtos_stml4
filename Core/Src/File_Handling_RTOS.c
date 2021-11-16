@@ -9,8 +9,8 @@
 #include "stm32l4xx_hal.h"
 
 
-extern UART_HandleTypeDef huart3;
-#define UART &huart3
+extern UART_HandleTypeDef huart2;
+#define UART &huart2
 
 
 
@@ -434,5 +434,31 @@ void Check_SD_Space (void)
     sprintf (buf, "SD CARD Free Space: \t%lu\n",free_space);
     Send_Uart(buf);
     vPortFree(buf);
+}
+
+uint32_t Size_File (char *name)
+{
+  uint32_t size;
+	/**** check whether the file exists or not ****/
+	fresult = f_stat (name, &fno);
+	if (fresult != FR_OK)
+	{
+		char *buf = pvPortMalloc(100*sizeof(char));
+		sprintf (buf, "ERROR!!! *%s* does not exists\n\n", name);
+		Send_Uart (buf);
+		vPortFree(buf);
+	    return fresult;
+	}
+
+	else
+	{
+    char *buf = pvPortMalloc(100*sizeof(char));
+		size = fno.fsize;
+    sprintf (buf, "Size file: \t%lu\n", (unsigned long) size);
+    Send_Uart(buf);
+    vPortFree(buf);
+	}
+  
+    return size;
 }
 
