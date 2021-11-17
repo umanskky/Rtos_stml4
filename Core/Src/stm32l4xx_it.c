@@ -38,9 +38,11 @@ extern osMessageQueueId_t myQueue01Handle;
 extern osSemaphoreId_t myBinarySem01Handle;
 
 extern uint8_t rxBuffer[64];
-extern uint8_t rxData[64];
+extern uint8_t rxData[256];
 uint16_t rxBufLen;
 extern uint8_t cnt;
+
+MY_Struct strc;
 
 osStatus_t status3;
 
@@ -311,8 +313,8 @@ void USART2_IRQHandler(void)
 		
 		__HAL_DMA_DISABLE(&hdma_usart2_rx);
 		rxBufLen = 64 - __HAL_DMA_GET_COUNTER(&hdma_usart2_rx);
-    
-    osMessageQueuePut(myQueue01Handle, rxBuffer, NULL, 0);
+    memcpy(&strc, rxBuffer, sizeof(rxBuffer));
+    status3 = osMessageQueuePut(myQueue01Handle, &strc, NULL, 0);
     
 		//memcpy(rxData, rxBuffer, sizeof(rxBuffer));
     memset(rxBuffer, 0, sizeof(rxBuffer));

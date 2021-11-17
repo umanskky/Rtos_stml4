@@ -55,6 +55,12 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
+typedef struct{
+  
+  uint8_t buff[64];
+  
+}MY_Struct ;
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

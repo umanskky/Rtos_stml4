@@ -44,6 +44,8 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
+//#define buff_len  64
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -61,7 +63,7 @@ osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128 * 4
+  .stack_size = 128 * 8
 };
 /* Definitions for myQueue01 */
 osMessageQueueId_t myQueue01Handle;
@@ -104,10 +106,14 @@ uint8_t Buff[128];
 uint8_t rxBuffer[64];
 //char rxData[64] = "Alexander\r\n";
 
-uint8_t data[64];
+uint8_t data[256];
 uint8_t cnt = 0;
 
 uint32_t size = 0;
+
+
+
+//MY_Struct strc;
 
 //osStatus_t status2;
 
@@ -196,7 +202,7 @@ int main(void)
 
   /* Create the queue(s) */
   /* creation of myQueue01 */
-  myQueue01Handle = osMessageQueueNew (16, 64, &myQueue01_attributes);
+  myQueue01Handle = osMessageQueueNew (16, sizeof(MY_Struct), &myQueue01_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -536,18 +542,18 @@ void StartDefaultTask(void *argument)
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   osStatus_t status;
-  
+  MY_Struct str;
 	//char* data = "Alexander";
   
   for(;;)
   {
-    status = osMessageQueueGet(myQueue01Handle, data, NULL, osWaitForever);
+    status = osMessageQueueGet(myQueue01Handle, &str, NULL, osWaitForever);
     
     if(status == osOK)
     {
       Mount_SD("/");
-      Update_File ("TEMP.TXT", (char*)data);
-      HAL_UART_Transmit(&huart2, data, sizeof(data), 0xffff);
+      Update_File ("TEMP.TXT", (char*)str.buff);
+      HAL_UART_Transmit(&huart2, data, sizeof(str.buff), 0xffff);
       size = Size_File("TEMP.TXT");
       Unmount_SD("/");
     }
