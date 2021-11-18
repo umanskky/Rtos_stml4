@@ -37,14 +37,16 @@
 extern osMessageQueueId_t myQueue01Handle;
 extern osSemaphoreId_t myBinarySem01Handle;
 
-extern uint8_t rxBuffer[64];
+extern uint8_t rxBuffer[1024];
 extern uint8_t rxData[256];
 uint16_t rxBufLen;
 extern uint8_t cnt;
 
-MY_Struct strc;
+
 
 osStatus_t status3;
+
+extern MY_Struct str;
 
 /* USER CODE END TD */
 
@@ -304,23 +306,27 @@ void USART2_IRQHandler(void)
   /* USER CODE BEGIN USART2_IRQn 0 */
 
   /* USER CODE END USART2_IRQn 0 */
-  HAL_UART_IRQHandler(&huart2);
+//  HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
+  //MY_Struct *strc;
+  //char *path = pvPortMalloc(100*sizeof (char));
   
   if(__HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE) != RESET)
 	{
 		__HAL_UART_CLEAR_FLAG(&huart2, UART_FLAG_IDLE);
 		
 		__HAL_DMA_DISABLE(&hdma_usart2_rx);
-		rxBufLen = 64 - __HAL_DMA_GET_COUNTER(&hdma_usart2_rx);
-    memcpy(&strc, rxBuffer, sizeof(rxBuffer));
-    status3 = osMessageQueuePut(myQueue01Handle, &strc, NULL, 0);
+		rxBufLen = 1024 - __HAL_DMA_GET_COUNTER(&hdma_usart2_rx);
+    memcpy(&str, rxBuffer, sizeof(rxBuffer));
+    status3 = osMessageQueuePut(myQueue01Handle, &str, NULL, 0);
     
 		//memcpy(rxData, rxBuffer, sizeof(rxBuffer));
     memset(rxBuffer, 0, sizeof(rxBuffer));
     
-		__HAL_DMA_SET_COUNTER(&hdma_usart2_rx, 64);
+		__HAL_DMA_SET_COUNTER(&hdma_usart2_rx, 1024);
 		__HAL_DMA_ENABLE(&hdma_usart2_rx);
+    
+     //vPortFree(path);
 	}
 
   /* USER CODE END USART2_IRQn 1 */

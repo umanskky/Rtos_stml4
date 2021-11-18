@@ -103,7 +103,7 @@ void timer_init(void);
 
 uint8_t Buff[128];
 
-uint8_t rxBuffer[64];
+uint8_t rxBuffer[1024];
 //char rxData[64] = "Alexander\r\n";
 
 uint8_t data[256];
@@ -111,6 +111,7 @@ uint8_t cnt = 0;
 
 uint32_t size = 0;
 
+MY_Struct str;
 
 
 //MY_Struct strc;
@@ -202,7 +203,7 @@ int main(void)
 
   /* Create the queue(s) */
   /* creation of myQueue01 */
-  myQueue01Handle = osMessageQueueNew (16, sizeof(MY_Struct), &myQueue01_attributes);
+  myQueue01Handle = osMessageQueueNew (16, sizeof(uint16_t), &myQueue01_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -542,20 +543,23 @@ void StartDefaultTask(void *argument)
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   osStatus_t status;
-  MY_Struct str;
+  //MY_Struct str;
 	//char* data = "Alexander";
   
   for(;;)
   {
-    status = osMessageQueueGet(myQueue01Handle, &str, NULL, osWaitForever);
+    //MY_Struct *str;// = pvPortMalloc(sizeof (MY_Struct));;
+    status = osMessageQueueGet(myQueue01Handle, &str, NULL, 0);
     
     if(status == osOK)
     {
-      Mount_SD("/");
-      Update_File ("TEMP.TXT", (char*)str.buff);
-      HAL_UART_Transmit(&huart2, data, sizeof(str.buff), 0xffff);
-      size = Size_File("TEMP.TXT");
-      Unmount_SD("/");
+//      Mount_SD("/");
+//      Update_File ("TEMP.TXT", (char*)str.buff);
+      HAL_UART_Transmit(&huart2, (uint8_t*)&str, strlen((char*)str.buff), 0xffff);
+      //size = Size_File("TEMP.TXT");
+      //Unmount_SD("/");
+      
+      //vPortFree(str);
     }
     
     //osDelay(200);    

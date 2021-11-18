@@ -57,7 +57,7 @@ void Error_Handler(void);
 
 typedef struct{
   
-  uint8_t buff[64];
+  uint8_t buff[1024];
   
 }MY_Struct ;
 
